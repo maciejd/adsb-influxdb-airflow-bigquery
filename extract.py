@@ -9,7 +9,7 @@ client = influxdb_client.InfluxDBClient(
 
 query_api = client.query_api()
 query = 'from(bucket:"adsb")\
-|> range(start: -5m)'
+|> range(start: -1m)'
 result = query_api.query(query=query)
 results = []
 for table in result:
