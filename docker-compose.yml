@@ -1,0 +1,28 @@
+version: '2.0'
+
+services:
+  influxdb18:
+    image: influxdb:1.8
+    volumes:
+      - myInfluxVolume:/var/lib/influxdb18:rw
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXDB_HTTP_FLUX_ENABLED=TRUE
+  adsb2influxdb:
+    image: mikenye/adsb-to-influxdb:latest
+    tty: true
+    container_name: adsb2influxdb
+    restart: always
+    tmpfs: /run/readsb
+    environment:
+      - TZ="America/New_York"
+      - INFLUXDBURL=http://influxdb18:8086
+      - ADSBHOST=10.0.0.239
+  grafana:
+    image: grafana/grafana-oss:latest
+    ports:
+      - 3000:3000
+
+volumes:
+  myInfluxVolume:	
