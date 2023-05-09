@@ -8,12 +8,17 @@ client = influxdb_client.InfluxDBClient(
 )
 
 query_api = client.query_api()
-query = 'from(bucket:"adsb")\
-|> range(start: -1m)'
+
+#query last record for given flight/hex combitation in last 10 minutes
+query = 'from(bucket: "adsb") \
+  |> range(start: -10m) \
+  |> filter(fn: (r) => r._measurement == "adsb_icao") \
+  |> group(columns: ["flight","hex"])\
+  |> last()'
+
 result = query_api.query(query=query)
 results = []
 for table in result:
+    print(table)
     for record in table.records:
-        results.append((record.get_field(), record.get_value()))
-
-print(results)
+        print(record.values)
