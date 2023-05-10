@@ -3,7 +3,6 @@ from google.cloud import bigquery
 import extract
 import transform
 
-
 def load_to_bq(dataframe):
     client = bigquery.Client()
 
@@ -14,10 +13,7 @@ def load_to_bq(dataframe):
             bigquery.SchemaField("hex", bigquery.enums.SqlTypeNames.STRING),
             bigquery.SchemaField("flight", bigquery.enums.SqlTypeNames.STRING),
         ],
-        # Optionally, set the write disposition. BigQuery appends loaded rows
-        # to an existing table by default, but with WRITE_TRUNCATE write
-        # disposition it replaces the table with the loaded data.
-        # write_disposition="WRITE_TRUNCATE",
+        write_disposition='WRITE_APPEND'
     )
 
     job = client.load_table_from_dataframe(
