@@ -2,6 +2,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.google.cloud.operators.bigquery import BigQueryUpsertTableOperator
 from airflow.providers.influxdb.hooks.influxdb import InfluxDBHook
+from google.cloud import bigquery
 
 from datetime import datetime, timedelta
 import pandas as pd
@@ -33,7 +34,7 @@ with DAG(
             # 'trigger_rule': 'all_success'
         },
         description="Load 5min ADSB aggregates to BQ",
-        schedule=timedelta(days=1),
+        schedule=timedelta(minutes=5),
         start_date=datetime(2021, 1, 1),
         catchup=False,
         tags=["adsb"],
@@ -50,15 +51,44 @@ with DAG(
         ti = kwargs['ti']
         influx_data = ti.xcom_pull(task_ids='query_data')
         # concatenate multiple dataframes, group by airframe hex pick last NaN value for each
+        #todo handle if single dataframe
         df = pd.concat(influx_data)
         df = df.groupby(['hex']).last().reset_index()
-        # fields https://github.com/wiedehopf/readsb/blob/dev/README-json.md#aircraftjson
-        # todo handle exception that 'calc_track' is not always present in the response, perhaps on flux query level
-        df = df.drop(columns=['result', 'table'])
+        # fields loookup https://github.com/wiedehopf/readsb/blob/dev/README-json.md#aircraftjson
+        # ignore error as 'calc_track' is not always returned
+        df = df.drop(columns=['result', 'table', 'calc_track'], errors='ignore')
         print(df.to_string())
         return df
 
-    #need to use PythonOperator to use query_to_df method, InfluxDBOperator uses query
+    def load_to_bq(**kwargs):
+        ti = kwargs['ti']
+        dataframe = ti.xcom_pull(task_ids='process_data')
+        client = bigquery.Client()
+
+        table_id = "adsb-de.adsb.messages5m"
+
+        job_config = bigquery.LoadJobConfig(
+            schema=[
+                bigquery.SchemaField("hex", bigquery.enums.SqlTypeNames.STRING),
+                bigquery.SchemaField("flight", bigquery.enums.SqlTypeNames.STRING),
+            ],
+            write_disposition='WRITE_APPEND'
+        )
+
+        job = client.load_table_from_dataframe(
+            dataframe, table_id, job_config=job_config
+        )
+        job.result()
+        print("BQ job finished")
+
+        # table = client.get_table(table_id)
+        # print(
+        #     "Loaded {} rows and {} columns to {}".format(
+        #         table.num_rows, len(table.schema), table_id
+        #     )
+        # )
+
+    #need to use PythonOperator to use query_to_df() method, InfluxDBOperator uses query()
     query_data = PythonOperator(
         task_id='query_data',
         python_callable=query_to_df,
@@ -75,12 +105,11 @@ with DAG(
         dag=dag
     )
 
-    #     load_to_bigquery = BigQueryUpsertTableOperator(
-    #         task_id="upsert_table",
-    #         dataset_id="adsb",
-    #         table_resource={
-    #             "tableReference": {"tableId": "messages5m"},
-    #             "expirationTime": (int(time.time()) + 300) * 1000,
-    # })
+    load_data_to_bigquery = PythonOperator(
+        task_id = 'load_data_to_bigquery',
+        python_callable=load_to_bq,
+        provide_context = True,
+        dag = dag
+    )
 
-    query_data >> process_data
+    query_data >> process_data >> load_data_to_bigquery
