@@ -6,5 +6,7 @@ def merge_dataframes(list_of_df):
     df = pd.concat(list_of_df)
     df = df.groupby(['hex']).last().reset_index()
     # todo add checks
-    df = df.drop(columns=['result', 'table'])
+    #fields https://github.com/wiedehopf/readsb/blob/dev/README-json.md#aircraftjson
+    #todo had to drop calc_track, where did this field come from? was not in initial queries
+    df = df.drop(columns=['result', 'table', 'calc_track'])
     return df
