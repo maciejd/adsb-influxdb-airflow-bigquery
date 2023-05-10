@@ -3,6 +3,7 @@ from google.cloud import bigquery
 import extract
 import transform
 
+
 def load_to_bq(dataframe):
     client = bigquery.Client()
 
@@ -32,5 +33,5 @@ def load_to_bq(dataframe):
 if __name__ == "__main__":
     df = extract.query_last_5m()
     df = transform.merge_dataframes(df)
-    #print(df.to_string())
+    print(df.to_string())
     load_to_bq(df)
