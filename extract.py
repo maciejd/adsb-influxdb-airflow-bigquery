@@ -1,6 +1,5 @@
 import influxdb_client
 
-import transform
 
 bucket = "adsb"
 url = "http://127.0.0.1:8086"
@@ -22,7 +21,3 @@ def query_last_5m():
 
     list_of_df = query_api.query_data_frame(query=query)
     return list_of_df
-
-
-if __name__ == "__main__":
-    transform.merge_dataframes(query_last_5m())
