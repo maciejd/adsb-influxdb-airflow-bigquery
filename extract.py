@@ -1,23 +1,28 @@
 import influxdb_client
-import pandas as pd
+
+import transform
 
 bucket = "adsb"
-url="http://127.0.0.1:8086"
+url = "http://127.0.0.1:8086"
 
-client = influxdb_client.InfluxDBClient(
-    url=url
-)
 
-query_api = client.query_api()
+def query_last_5m():
+    client = influxdb_client.InfluxDBClient(
+        url=url
+    )
 
-#query last record for given flight/hex combitation in last 10 minutes
-query = 'from(bucket: "adsb") \
-  |> range(start: -5m) \
-  |> filter(fn: (r) => r._measurement == "adsb_icao") \
-  |> group(columns: ["flight","hex"])\
-  |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")'
+    query_api = client.query_api()
 
-tables = query_api.query_data_frame(query=query)
-df = pd.concat(tables)
-df = df.groupby(['hex']).first().reset_index()
-print(df[['flight','hex','lon','lat','track','gs','alt_geom','roll']])
+    # query last record for given flight/hex combitation in last 10 minutes
+    query = 'from(bucket: "adsb") \
+      |> range(start: -5m) \
+      |> filter(fn: (r) => r._measurement == "adsb_icao") \
+      |> group(columns: ["flight","hex"]) \
+      |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")'
+
+    list_of_df = query_api.query_data_frame(query=query)
+    return list_of_df
+
+
+if __name__ == "__main__":
+    transform.merge_dataframes(query_last_5m())
