@@ -7,6 +7,6 @@ def merge_dataframes(list_of_df):
     df = df.groupby(['hex']).last().reset_index()
     # todo add checks
     #fields https://github.com/wiedehopf/readsb/blob/dev/README-json.md#aircraftjson
-    #todo had to drop calc_track, where did this field come from? was not in initial queries
-    df = df.drop(columns=['result', 'table', 'calc_track'])
+    #todo handle the fact that 'calc_track' is not always present in the response, perhaps on flux query level
+    df = df.drop(columns=['result', 'table'])
     return df

@@ -14,10 +14,7 @@ def load_to_bq(dataframe):
             bigquery.SchemaField("hex", bigquery.enums.SqlTypeNames.STRING),
             bigquery.SchemaField("flight", bigquery.enums.SqlTypeNames.STRING),
         ],
-        # Optionally, set the write disposition. BigQuery appends loaded rows
-        # to an existing table by default, but with WRITE_TRUNCATE write
-        # disposition it replaces the table with the loaded data.
-        # write_disposition="WRITE_TRUNCATE",
+        write_disposition='WRITE_APPEND'
     )
 
     job = client.load_table_from_dataframe(
@@ -36,5 +33,5 @@ def load_to_bq(dataframe):
 if __name__ == "__main__":
     df = extract.query_last_5m()
     df = transform.merge_dataframes(df)
-    #print(df.to_string())
+    print(df.to_string())
     load_to_bq(df)
