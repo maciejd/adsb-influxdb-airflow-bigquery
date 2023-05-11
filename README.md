@@ -12,7 +12,7 @@ Access to ADSB data exposed _somewhere_. I personally use Raspberry Pi with [wie
 - Create Service account in GCP with the following roles:
   - `BigQuery Data Editor`
   - `BigQuery Job User`
-- download service account key and store it in project root directory as `service_account_key.json` (or update namepath in docker-compose.yml respectively)
+- download service account key and store it in project root directory as `service_account_key.json` (or update namepath in `docker-compose.yml` respectively)
 
 ### docker-compose.yml
 - modify value `ADSBHOST` to IP of your ADSB host / Raspberry Pi
