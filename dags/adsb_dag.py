@@ -7,12 +7,8 @@ from google.cloud import bigquery
 from datetime import datetime, timedelta
 import pandas as pd
 
-# Operators; we need this to operate!
-
 with DAG(
         "adsb_etl",
-        # These args will get passed on to each operator
-        # You can override them on a per-task basis during operator initialization
         default_args={
             "depends_on_past": False,
             "email": ["airflow@example.com"],
@@ -47,6 +43,7 @@ with DAG(
                 |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")'
         return hook.query_to_df(sql)
 
+
     def transform_data_from_influx(**kwargs):
         ti = kwargs['ti']
         influx_data = ti.xcom_pull(task_ids='query_data')
@@ -60,12 +57,15 @@ with DAG(
         print(df.to_string())
         return df
 
-    # ensures object is of type list, depending on traffic, a dataset or a list of datasets can be returned, breaking the concat
+
+    # ensures object is of type list, depending on traffic, a dataset or a list of datasets can be returned,
+    # breaking the concat
     def ensure_list(item):
         if isinstance(item, list):
             return item
         else:
             return [item]
+
 
     def load_to_bq(**kwargs):
         ti = kwargs['ti']
@@ -88,14 +88,8 @@ with DAG(
         job.result()
         print("BQ job finished")
 
-        # table = client.get_table(table_id)
-        # print(
-        #     "Loaded {} rows and {} columns to {}".format(
-        #         table.num_rows, len(table.schema), table_id
-        #     )
-        # )
 
-    #need to use PythonOperator to use query_to_df() method, InfluxDBOperator uses query()
+    # need to use PythonOperator to use query_to_df() method, InfluxDBOperator uses query()
     query_data = PythonOperator(
         task_id='query_data',
         python_callable=query_to_df,
@@ -113,10 +107,10 @@ with DAG(
     )
 
     load_data_to_bigquery = PythonOperator(
-        task_id = 'load_data_to_bigquery',
+        task_id='load_data_to_bigquery',
         python_callable=load_to_bq,
-        provide_context = True,
-        dag = dag
+        provide_context=True,
+        dag=dag
     )
 
     query_data >> process_data >> load_data_to_bigquery
