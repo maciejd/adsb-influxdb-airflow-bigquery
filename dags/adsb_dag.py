@@ -50,8 +50,8 @@ with DAG(
     def transform_data_from_influx(**kwargs):
         ti = kwargs['ti']
         influx_data = ti.xcom_pull(task_ids='query_data')
+        influx_data = ensure_list(influx_data)
         # concatenate multiple dataframes, group by airframe hex pick last NaN value for each
-        #todo handle if single dataframe
         df = pd.concat(influx_data)
         df = df.groupby(['hex']).last().reset_index()
         # fields loookup https://github.com/wiedehopf/readsb/blob/dev/README-json.md#aircraftjson
@@ -59,6 +59,13 @@ with DAG(
         df = df.drop(columns=['result', 'table', 'calc_track'], errors='ignore')
         print(df.to_string())
         return df
+
+    # ensures object is of type list, depending on traffic, a dataset or a list of datasets can be returned, breaking the concat
+    def ensure_list(item):
+        if isinstance(item, list):
+            return item
+        else:
+            return [item]
 
     def load_to_bq(**kwargs):
         ti = kwargs['ti']
