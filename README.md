@@ -1,4 +1,4 @@
-# adsb_de
+# adsb-influxdb-airflow-bigquery
 
 This repo loads ADSB data to InfluxDB and demonstrates the use of Airflow by querying the data form InfluxDB, transforming it and loading it to BigQuery.
 
