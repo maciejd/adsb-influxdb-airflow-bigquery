@@ -23,6 +23,7 @@ Access to ADSB data exposed _somewhere_. I personally use Raspberry Pi with [wie
 
 ### Airflow (after running the containers)
 - Log in and create a new connection in Airflow
+  - Connection id: `influx_db_conn`
   - Connection type: `influxdb`
   - Schema: `http`
   - Host: `influxdb18`
